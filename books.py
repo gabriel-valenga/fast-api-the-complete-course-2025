@@ -11,18 +11,36 @@ BOOKS = [
 ]
 
 @app.get("/books")
-async def read_all_books():
+async def return_all_books():
     return BOOKS
 
 
-@app.get("/books/{book_title}")
-async def read_book_filter_by_book_title(book_title):
+@app.get("/books/{title}")
+async def return_a_book_filtering_by_book_title(title:str):
     for book in BOOKS:
-        if book.get('title').casefold() == book_title.casefold():
+        if book.get('title').casefold() == title.casefold():
             return book
-    return {'message': f'not found a book with title: {book_title}'}
+    return {'message': f'not found a book with title: {title}'}
 
 
 @app.get("/books/mybook")
-async def read_my_favorite_book():
+async def return_my_favorite_book():
     return {'book title': 'My Favorite Book'}
+
+
+@app.get("/books/category/")
+async def return_books_by_category(category:str):
+    books_to_return = []
+    for book in BOOKS:
+        if book.get('category').casefold() == category.casefold():
+            books_to_return.append(book)
+    return books_to_return
+
+
+@app.get("/books/author/")
+async def return_books_by_author(author:str):
+    books_to_return = []
+    for book in BOOKS:
+        if book.get('author').casefold() == author.casefold():
+            books_to_return.append(book)
+    return books_to_return
