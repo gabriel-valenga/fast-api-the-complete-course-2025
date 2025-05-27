@@ -47,7 +47,7 @@ async def return_books_by_author(author:str):
 
 
 @app.get("/books/{author}/")
-async def return_books_by_author_filtering_by_category(author:str, category):
+async def return_books_by_author_filtering_by_category(author:str, category:str):
     books_to_return = []
     for book in BOOKS:
         if (
