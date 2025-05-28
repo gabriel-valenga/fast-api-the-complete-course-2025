@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 from book import Book
-
+from book_request_model import BookRequestModel
 
 app = FastAPI()
 BOOKS = [
@@ -48,6 +48,13 @@ BOOKS = [
     )
 ]
 
-app.get("/books")
+@app.get("/books")
 def return_all_books():
     return BOOKS
+
+
+@app.post("/create-book")
+def create_book(book_request:BookRequestModel):
+    new_book = Book(**book_request.model_dump())
+    BOOKS.append(new_book)
+    return new_book
