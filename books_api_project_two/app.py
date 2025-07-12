@@ -1,4 +1,4 @@
-from fastapi import Body, FastAPI
+from fastapi import Body, FastAPI, HTTPException
 from book import Book
 from book_request_model import BookRequestModel
 
@@ -58,3 +58,11 @@ def create_book(book_request:BookRequestModel):
     new_book = Book(**book_request.model_dump())
     BOOKS.append(new_book)
     return new_book
+
+
+@app.get("/book/id")
+def get_book_by_id(id: int):
+    for book in BOOKS:
+        if book.id == id:
+            return book
+    raise HTTPException(status_code=404, detail="Book not found")
