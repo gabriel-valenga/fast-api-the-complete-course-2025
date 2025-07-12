@@ -1,68 +1,26 @@
-from fastapi import Body, FastAPI, HTTPException
-from book import Book
-from book_request_model import BookRequestModel
+from fastapi import FastAPI
+from book_request_model import CreateBookRequestModel
+from library import Library
 
 app = FastAPI()
-BOOKS = [
-    Book(
-        id=1, 
-        title='Computer Science Pro', 
-        author='codingwithroby', 
-        description='A very nice book!', 
-        rating=5
-    ),
-    Book(
-        id=2, 
-        title='Be Fast With FastAPI', 
-        author='codingwithroby', 
-        description='A great book!', 
-        rating=4
-    ),
-    Book(
-        id=3, 
-        title='Master Endpoints', 
-        author='codingwithroby', 
-        description='An awesome book!', 
-        rating=5
-    ),
-    Book(
-        id=4, 
-        title='HP1', 
-        author='Author One', 
-        description='Book description', 
-        rating=3
-    ),
-    Book(
-        id=5, 
-        title='HP2', 
-        author='Author Two', 
-        description='Book description', 
-        rating=2
-    ),
-    Book(
-        id=6, 
-        title='HP3', 
-        author='Author Three', 
-        description='Book description', 
-        rating=1
-    )
-]
+library = Library()
 
 @app.get("/books")
 def return_all_books():
-    return BOOKS
+    return library.get_all_books()
 
 
 @app.post("/create-book")
-def create_book(book_request:BookRequestModel):
-    new_book = Book(**book_request.model_dump())
-    BOOKS.append(new_book)
+def create_book(book_request:CreateBookRequestModel):
+    new_book = library.create_and_add_book(book_request)
     return new_book
 
 
 @app.get("/book/id")
 def get_book_by_id(id: int):
-    for book in BOOKS:
-        if book.id == id:
-            return book
-    raise HTTPException(status_code=404, detail="Book not found")
+    book = library.get_book_by_id(id)
+    if book:
+        return book
+    else:
+        return {"error": "Book not found"}
+    
