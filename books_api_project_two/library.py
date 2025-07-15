@@ -1,6 +1,6 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 from book import Book
-from book_request_model import CreateBookRequestModel
+from book_request_model import CreateBookRequestModel, UpdateBookRequestModel
 
 class Library:
     def __init__(self):
@@ -58,6 +58,17 @@ class Library:
         return new_book
     
 
+    def update_book(self, book_id: int, book_request: UpdateBookRequestModel):
+        book = self.get_book_by_id(book_id)
+        if book:
+            book_request = book_request.model_dump(exclude_unset=True)
+            for key, value in book_request.items():
+                setattr(book, key, value)
+            return book
+        else:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+
     def add_book(self, book: Book):
         self.books.append(book)
 
@@ -68,8 +79,25 @@ class Library:
         return new_book
     
 
+    def delete_book(self, book_id: int):
+        book = self.get_book_by_id(book_id)
+        if book:
+            self.books.remove(book)
+            return Response(status_code=204)
+        else:
+            raise HTTPException(status_code=404, detail="Book not found")
+
+
     def get_all_books(self):
         return self.books
+    
+
+    def get_books_by_rating(self, rating: int):
+        filtered_books = [book for book in self.books if book.rating == rating]
+        if filtered_books:
+            return filtered_books
+        else:
+            raise HTTPException(status_code=404, detail="No books found with the given rating")
 
 
     def get_book_by_id(self, book_id: int):
