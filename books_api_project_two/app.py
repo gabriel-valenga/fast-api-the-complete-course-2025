@@ -12,40 +12,38 @@ def return_all_books():
 
 @app.get("/book/id")
 def get_book_by_id(id: int):
-    book = library.get_book_by_id(id)
-    if book:
+    try:
+        book = library.get_book_by_id(id)
         return book
-    else:
-        return Response(status_code=404, content={"message": "Book not found"})
+    except HTTPException as e:
+        return Response(status_code=e.status_code, content={"message": e.detail})
     
 
 @app.get("/books/rating")
 def return_all_books_by_rating(rating: int):
-    books = library.get_books_by_rating(rating)
-    if books:
+    try:
+        books = library.get_books_by_rating(rating)
         return books
-    else:
-        return Response(status_code=404, content={"message": "No books found with the given rating"})
+    except HTTPException as e:
+        return Response(status_code=e.status_code, content={"message": e.detail})
+
+
+@app.get("/books/published-year")
+def return_all_books_by_published_year(published_year: int):
+    return library.get_books_by_published_year(published_year) 
 
 
 @app.post("/create-book")
 def create_book(book_request:CreateBookRequestModel):
-    new_book = library.create_and_add_book(book_request)
-    return new_book
+    return library.create_and_add_book(book_request)
     
 
 @app.put("/update-book/{book_id}")
 def update_book(book_id: int, book_request: UpdateBookRequestModel):
-    try:
-        updated_book = library.update_book(book_id, book_request)
-        return updated_book
-    except HTTPException as e:
-        return Response(status_code=e.status_code, content={"message": e.detail})
+    return library.update_book(book_id, book_request)
     
 
 @app.delete("/delete-book/{book_id}")
 def delete_book(book_id: int):
-    try:
-        return library.delete_book(book_id)
-    except HTTPException as e:
-        return Response(status_code=e.status_code, content={"message": e.detail})
+    return library.delete_book(book_id)
+    

@@ -10,42 +10,48 @@ class Library:
             title='Computer Science Pro', 
             author='codingwithroby', 
             description='A very nice book!', 
-            rating=5
+            rating=5,
+            published_year=2023
         ),
         Book(
             id=2, 
             title='Be Fast With FastAPI', 
             author='codingwithroby', 
             description='A great book!', 
-            rating=4
+            rating=4,
+            published_year=2021
         ),
         Book(
             id=3, 
             title='Master Endpoints', 
             author='codingwithroby', 
             description='An awesome book!', 
-            rating=5
+            rating=5,
+            published_year=2022
         ),
         Book(
             id=4, 
             title='HP1', 
             author='Author One', 
             description='Book description', 
-            rating=3
+            rating=3,
+            published_year=2019
         ),
         Book(
             id=5, 
             title='HP2', 
             author='Author Two', 
             description='Book description', 
-            rating=2
+            rating=2,
+            published_year=2018
         ),
         Book(
             id=6, 
             title='HP3', 
             author='Author Three', 
             description='Book description', 
-            rating=1
+            rating=1,
+            published_year=2019
         )
     ]
 
@@ -98,6 +104,14 @@ class Library:
             return filtered_books
         else:
             raise HTTPException(status_code=404, detail="No books found with the given rating")
+
+
+    def get_books_by_published_year(self, published_year: int):
+        filtered_books = [book for book in self.books if book.published_year == published_year]
+        if filtered_books:
+            return filtered_books
+        else:
+            raise HTTPException(status_code=404, detail="No books found with the given published year")
 
 
     def get_book_by_id(self, book_id: int):
