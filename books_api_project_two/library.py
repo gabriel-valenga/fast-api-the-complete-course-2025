@@ -89,7 +89,6 @@ class Library:
         book = self.get_book_by_id(book_id)
         if book:
             self.books.remove(book)
-            return Response(status_code=204)
         else:
             raise HTTPException(status_code=404, detail="Book not found")
 

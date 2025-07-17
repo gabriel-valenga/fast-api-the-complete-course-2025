@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, status
 from book_request_model import CreateBookRequestModel, UpdateBookRequestModel
 from library import Library
 
@@ -33,7 +33,7 @@ def return_all_books_by_published_year(published_year: int):
     return library.get_books_by_published_year(published_year) 
 
 
-@app.post("/create-book")
+@app.post("/create-book", status_code=status.HTTP_201_CREATED)
 def create_book(book_request:CreateBookRequestModel):
     return library.create_and_add_book(book_request)
     
@@ -43,7 +43,7 @@ def update_book(book_id: int, book_request: UpdateBookRequestModel):
     return library.update_book(book_id, book_request)
     
 
-@app.delete("/delete-book/{book_id}")
+@app.delete("/delete-book/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_book(book_id: int):
     return library.delete_book(book_id)
     
