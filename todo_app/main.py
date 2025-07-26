@@ -1,69 +1,12 @@
-from typing import Annotated
-from fastapi import FastAPI, Depends, HTTPException, Path, status
-from database import engine, session_local
-from sqlalchemy.orm import Session
-from todo_response import TodoResponse
-from todo_request import TodoRequest
+from fastapi import FastAPI
+from database import engine
+from routers import auth, todos
 import models
 
 app = FastAPI() 
 
 models.base.metadata.create_all(bind=engine)
 
-def get_db():
-    db = session_local()
-    try:
-        yield db
-    finally:
-        db.close()
+app.include_router(auth.router, tags=["auth"])
+app.include_router(todos.router, tags=["todos"])
 
-
-db_dependency = Annotated[Session, Depends(get_db)]
-
-
-def return_todo_filtering_by_id(db: Session, todo_id: int):
-    todo = db.query(models.Todos).filter(models.Todos.id == todo_id).first()
-    if not todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
-    return todo
-
-
-@app.get("/")
-async def read_all_todos(db: db_dependency):
-    todos = db.query(models.Todos).all()
-    return {"todos": [TodoResponse.model_validate(t).model_dump() for t in todos]}
-
-
-@app.get("/todo/{todo_id}")
-async def get_todo_by_id(db: db_dependency, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id)
-    if not todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
-    return TodoResponse.model_validate(todo)
-
-
-@app.post("/todo/", status_code=status.HTTP_201_CREATED)
-async def create_todo(db: db_dependency, todo_request: TodoRequest):
-    todo = models.Todos(**todo_request.model_dump())
-    db.add(todo)
-    db.commit()
-    db.refresh(todo)
-    return TodoResponse.model_validate(todo)
-
-
-@app.put("/todo/{todo_id}")
-async def update_todo(db: db_dependency, todo_request: TodoRequest, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id)
-    for key, value in todo_request.model_dump().items():
-        setattr(todo, key, value)
-    db.commit()
-    db.refresh(todo)
-    return TodoResponse.model_validate(todo)
-
-
-@app.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(db: db_dependency, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id)
-    db.delete(todo)
-    db.commit()
-    return {"detail": "Todo deleted successfully"}
