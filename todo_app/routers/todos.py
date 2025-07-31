@@ -4,6 +4,7 @@ from database import session_local
 from sqlalchemy.orm import Session
 from todo_response import TodoResponse
 from todo_request import TodoRequest
+from .auth import get_current_user
 import models
 
 router = APIRouter()
@@ -17,6 +18,7 @@ def get_db():
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 def return_todo_filtering_by_id(db: Session, todo_id: int):
@@ -41,8 +43,10 @@ async def get_todo_by_id(db: db_dependency, todo_id: int = Path(gt=0)):
 
 
 @router.post("/todo/", status_code=status.HTTP_201_CREATED)
-async def create_todo(db: db_dependency, todo_request: TodoRequest):
-    todo = models.Todos(**todo_request.model_dump())
+async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
+    if not user:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    todo = models.Todos(**todo_request.model_dump(), owner_id=user.get('id'))
     db.add(todo)
     db.commit()
     db.refresh(todo)

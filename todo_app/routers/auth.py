@@ -14,7 +14,7 @@ SECRET_KEY = '252dee40692e493794a122057e2c91f11ae047b55c2445728e5533b9aae93eb0'
 ALGORITHM = 'HS256'
 router = APIRouter()
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/get_user/")
 
 def get_db():
     db = session_local()
@@ -32,7 +32,7 @@ class CreateUserRequest(BaseModel):
     first_name: str
     last_name: str = None
     password: str
-    role: str = "user"  # Default role is 'user'
+    roles: str = "user"  # Default role is 'user'
 
 
 @router.get("/auth/get_user/")
@@ -40,13 +40,16 @@ async def get_user():
     return {"message": "User authenticated successfully"}
 
 
-def get_current_user(token: str = Depends(oauth2_bearer), db: db_dependency = Depends(get_db)):
+def get_current_user(db: db_dependency, token: str = Depends(oauth2_bearer)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print('teste1')
         user_id: int = payload.get("id")
+        print(user_id)
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
         user = db.query(User).filter(User.id == user_id).first()
+        print(user.id)
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
         return user
@@ -70,7 +73,7 @@ async def create_user(db: db_dependency, user: CreateUserRequest):
         first_name=user.first_name,
         last_name=user.last_name,
         hashed_password=bcrypt_context.hash(user.password),  # In a real application, hash the password
-        role=user.role,
+        roles=user.roles,
         is_active=True  # Default to active
     )
     db.add(create_user_model)
