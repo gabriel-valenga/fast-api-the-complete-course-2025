@@ -46,7 +46,7 @@ async def get_todo_by_id(db: db_dependency, todo_id: int = Path(gt=0)):
 async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
     if not user:
         raise HTTPException(status_code=401, detail="User not authenticated")
-    todo = models.Todos(**todo_request.model_dump(), owner_id=user.get('id'))
+    todo = models.Todos(**todo_request.model_dump(), owner_id=user.id)
     db.add(todo)
     db.commit()
     db.refresh(todo)
