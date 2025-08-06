@@ -42,8 +42,6 @@ async def read_all_todos(user: user_dependency, db: db_dependency):
 @router.get("/todo/{todo_id}")
 async def get_todo_by_id(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     todo = return_todo_filtering_by_id(db, todo_id, user.id)
-    if not todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
     return TodoResponse.model_validate(todo)
 
 
@@ -59,8 +57,13 @@ async def create_todo(user: user_dependency, db: db_dependency, todo_request: To
 
 
 @router.put("/todo/{todo_id}")
-async def update_todo(db: db_dependency, todo_request: TodoRequest, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id)
+async def update_todo(
+        user: user_dependency,
+        db: db_dependency,
+        todo_request: TodoRequest, 
+        todo_id: int = Path(gt=0)
+    ):
+    todo = return_todo_filtering_by_id(db, todo_id, user.id)
     for key, value in todo_request.model_dump().items():
         setattr(todo, key, value)
     db.commit()
@@ -69,8 +72,12 @@ async def update_todo(db: db_dependency, todo_request: TodoRequest, todo_id: int
 
 
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(db: db_dependency, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id)
+async def delete_todo(
+        user: user_dependency,
+        db: db_dependency, 
+        todo_id: int = Path(gt=0)
+    ):
+    todo = return_todo_filtering_by_id(db, todo_id, user.id)
     db.delete(todo)
     db.commit()
     return {"detail": "Todo deleted successfully"}
