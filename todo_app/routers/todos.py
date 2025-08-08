@@ -21,7 +21,18 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
-def return_todo_filtering_by_id(db: Session, todo_id: int, user_id: int):
+def return_todo_filtering_by_id(db: Session, todo_id: int):
+    todo = (
+        db.query(models.Todos)
+        .filter(models.Todos.id == todo_id)
+        .first()
+    )
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    return todo
+
+
+def return_todo_filtering_by_id_and_user_id(db: Session, todo_id: int, user_id: int):
     todo = (
         db.query(models.Todos)
         .filter(models.Todos.id == todo_id)
@@ -35,13 +46,20 @@ def return_todo_filtering_by_id(db: Session, todo_id: int, user_id: int):
 
 @router.get("/")
 async def read_all_todos(user: user_dependency, db: db_dependency):
-    todos = db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
+    if user.role != 'admin':
+        todos = db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
+    else:
+        todos = db.query(models.Todos).options(joinedload(models.Todos.owner)).all()
+
     return {"todos": [TodoResponse.model_validate(t).model_dump() for t in todos]}
 
 
 @router.get("/todo/{todo_id}")
 async def get_todo_by_id(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
-    todo = return_todo_filtering_by_id(db, todo_id, user.id)
+    if user.role != 'admin':
+        todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
+    else:
+        todo = return_todo_filtering_by_id(db, todo_id)
     return TodoResponse.model_validate(todo)
 
 
@@ -63,7 +81,10 @@ async def update_todo(
         todo_request: TodoRequest, 
         todo_id: int = Path(gt=0)
     ):
-    todo = return_todo_filtering_by_id(db, todo_id, user.id)
+    if user.role != 'admin':
+        todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
+    else:  
+        todo = return_todo_filtering_by_id(db, todo_id)
     for key, value in todo_request.model_dump().items():
         setattr(todo, key, value)
     db.commit()
@@ -77,7 +98,10 @@ async def delete_todo(
         db: db_dependency, 
         todo_id: int = Path(gt=0)
     ):
-    todo = return_todo_filtering_by_id(db, todo_id, user.id)
+    if user.role != 'admin':
+        todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
+    else:
+        todo = return_todo_filtering_by_id(db, todo_id)
     db.delete(todo)
     db.commit()
     return {"detail": "Todo deleted successfully"}

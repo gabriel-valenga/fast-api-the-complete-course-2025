@@ -38,7 +38,7 @@ class CreateUserRequest(BaseModel):
     first_name: str
     last_name: str | None = None
     password: str
-    roles: str = "user"  # Default user role
+    role: str = "user"  # Default user role
 
 
 # Extracts and validates current user from JWT token
@@ -66,8 +66,12 @@ async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
 
 
 # Creates a JWT token for a given user with expiration
-def create_access_token(username: str, user_id: int, expires_delta: timedelta = None):
-    to_encode = {"sub": username, "id": user_id}
+def create_access_token(
+        username: str, 
+        user_id: int, 
+        expires_delta: timedelta = None,
+        role: str = "user"):
+    to_encode = {"sub": username, "id": user_id, "role": role}
     # Set token expiration time (current UTC time + expires_delta)
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(seconds=3600))
     to_encode.update({"exp": expire})
@@ -85,7 +89,7 @@ async def create_user(db: db_dependency, user: CreateUserRequest):
         first_name=user.first_name,
         last_name=user.last_name,
         hashed_password=bcrypt_context.hash(user.password),
-        roles=user.roles,
+        role=user.role,
         is_active=True
     )
     db.add(create_user_model)
@@ -123,7 +127,8 @@ async def login_for_access_token(
     token = create_access_token(
         username=user.username,
         user_id=user.id,
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        role=user.role
     )
 
     # Return the token and token type as per OAuth2 spec

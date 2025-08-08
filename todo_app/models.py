@@ -12,7 +12,7 @@ class User(base):
     last_name = Column(String, nullable=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    roles = Column(String, default="user")  # Example role field
+    role = Column(String, default="user")
 
 
 class Todos(base):
