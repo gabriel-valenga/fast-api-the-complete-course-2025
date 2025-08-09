@@ -21,6 +21,10 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
+def hash_password(password: str) -> str:
+    return bcrypt_context.hash(password)
+
+
 # Dependency to get DB session, ensures session is closed after request
 def get_db():
     db = session_local()
@@ -88,7 +92,7 @@ async def create_user(db: db_dependency, user: CreateUserRequest):
         email=user.email,
         first_name=user.first_name,
         last_name=user.last_name,
-        hashed_password=bcrypt_context.hash(user.password),
+        hashed_password= hash_password(user.password),  # Hash the password before storing
         role=user.role,
         is_active=True
     )

@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, Path, status, APIRouter
 from database import session_local
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from todo_response import TodoResponse
 from todo_request import TodoRequest
 from .auth import get_current_user
