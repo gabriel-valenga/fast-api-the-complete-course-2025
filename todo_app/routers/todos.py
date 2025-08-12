@@ -1,30 +1,31 @@
-from typing import Annotated
+from typing import Annotated, Tuple
 from fastapi import Depends, HTTPException, Path, status, APIRouter
-from database import session_local
+from database import get_db
 from sqlalchemy.orm import Session, joinedload
 from todo_response import TodoResponse
 from todo_request import TodoRequest
 from .auth import get_current_user
-import models
+from models import Todos as TodosModel
 
 router = APIRouter()
 
-def get_db():
-    db = session_local()
-    try:
-        yield db
-    finally:
-        db.close()
+
+def get_db_and_user(
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user)
+) -> Tuple[Session, dict]:
+    return db, user
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
+db_and_user_dependency = Annotated[Tuple[Session, dict], Depends(get_db_and_user)]
 
 
 def return_todo_filtering_by_id(db: Session, todo_id: int):
     todo = (
-        db.query(models.Todos)
-        .filter(models.Todos.id == todo_id)
+        db.query(TodosModel)
+        .filter(TodosModel.id == todo_id)
         .first()
     )
     if not todo:
@@ -34,9 +35,9 @@ def return_todo_filtering_by_id(db: Session, todo_id: int):
 
 def return_todo_filtering_by_id_and_user_id(db: Session, todo_id: int, user_id: int):
     todo = (
-        db.query(models.Todos)
-        .filter(models.Todos.id == todo_id)
-        .filter(models.Todos.owner_id == user_id)
+        db.query(TodosModel)
+        .filter(TodosModel.id == todo_id)
+        .filter(TodosModel.owner_id == user_id)
         .first()
     )
     if not todo:
@@ -45,17 +46,19 @@ def return_todo_filtering_by_id_and_user_id(db: Session, todo_id: int, user_id: 
 
 
 @router.get("/")
-async def read_all_todos(user: user_dependency, db: db_dependency):
+async def read_all_todos(db_and_user: db_and_user_dependency):
+    db, user = db_and_user
     if user.role != 'admin':
-        todos = db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
+        todos = db.query(TodosModel).filter(TodosModel.owner_id == user.id).all()
     else:
-        todos = db.query(models.Todos).options(joinedload(models.Todos.owner)).all()
+        todos = db.query(TodosModel).options(joinedload(TodosModel.owner)).all()
 
     return {"todos": [TodoResponse.model_validate(t).model_dump() for t in todos]}
 
 
 @router.get("/todo/{todo_id}")
-async def get_todo_by_id(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
+async def get_todo_by_id(db_and_user: db_and_user_dependency, todo_id: int = Path(gt=0)):
+    db, user = db_and_user
     if user.role != 'admin':
         todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
     else:
@@ -64,10 +67,11 @@ async def get_todo_by_id(user: user_dependency, db: db_dependency, todo_id: int 
 
 
 @router.post("/todo/", status_code=status.HTTP_201_CREATED)
-async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
+async def create_todo(db_and_user: db_and_user_dependency, todo_request: TodoRequest):
+    db, user = db_and_user
     if not user:
         raise HTTPException(status_code=401, detail="User not authenticated")
-    todo = models.Todos(**todo_request.model_dump(), owner_id=user.id)
+    todo = TodosModel(**todo_request.model_dump(), owner_id=user.id)
     db.add(todo)
     db.commit()
     db.refresh(todo)
@@ -76,11 +80,11 @@ async def create_todo(user: user_dependency, db: db_dependency, todo_request: To
 
 @router.put("/todo/{todo_id}")
 async def update_todo(
-        user: user_dependency,
-        db: db_dependency,
+        db_and_user: db_and_user_dependency,
         todo_request: TodoRequest, 
         todo_id: int = Path(gt=0)
     ):
+    db, user = db_and_user
     if user.role != 'admin':
         todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
     else:  
@@ -94,10 +98,10 @@ async def update_todo(
 
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(
-        user: user_dependency,
-        db: db_dependency, 
+        db_and_user: db_and_user_dependency,
         todo_id: int = Path(gt=0)
     ):
+    db, user = db_and_user
     if user.role != 'admin':
         todo = return_todo_filtering_by_id_and_user_id(db, todo_id, user.id)
     else:

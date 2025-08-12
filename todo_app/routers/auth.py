@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, timezone  # Import datetime for token expiration
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Path, status, Depends
 from pydantic import BaseModel
 from database import session_local
 from sqlalchemy.orm import Session
@@ -41,12 +41,11 @@ class CreateUserRequest(BaseModel):
     email: str
     first_name: str
     last_name: str | None = None
-    password: str
+    password: str = Path(min_length=4, max_length=128)
     role: str = "user"  # Default user role
 
 
-# Extracts and validates current user from JWT token
-def get_current_user(db: db_dependency, token: str = Depends(oauth2_bearer)):
+def get_current_user_from_db(db: Session, token:str):
     try:
         # Decode JWT token using secret key and algorithm
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -63,7 +62,15 @@ def get_current_user(db: db_dependency, token: str = Depends(oauth2_bearer)):
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
 
-@router.get("/auth/get_user/")
+def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_bearer)):
+    return get_current_user_from_db(db, token)
+
+
+def get_db_and_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_bearer)):
+    return db, get_current_user_from_db(db, token)
+    
+
+@router.get("/get_user/")
 async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     # Returns current authenticated user's username
     return {"message": "User authenticated successfully", "user": current_user.username}
@@ -85,7 +92,7 @@ def create_access_token(
     return encoded_jwt
 
 
-@router.post("/auth/create_user/", status_code=status.HTTP_201_CREATED)
+@router.post("/create_user/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, user: CreateUserRequest):
     create_user_model = User(
         username=user.username,
@@ -112,7 +119,7 @@ def authenticate_user(db: Session, username: str, password: str):
 
 
 # Endpoint to login and receive JWT access token
-@router.post("/auth/token")
+@router.post("/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: db_dependency

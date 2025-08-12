@@ -5,7 +5,7 @@ class UserResponse(BaseModel):
     username: str
     email: str  
     role: str
-    firstname: str
+    first_name: str
     lastname: str = ''
     is_active: bool
 
