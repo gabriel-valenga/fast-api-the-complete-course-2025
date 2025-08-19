@@ -13,6 +13,7 @@ class User(base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     role = Column(String, default="user")
+    phone_number = Column(String, nullable=True)
 
 
 class Todos(base):
