@@ -1,11 +1,11 @@
 from datetime import timedelta, datetime, timezone  # Import datetime for token expiration
 from fastapi import APIRouter, HTTPException, Path, status, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from database import session_local
 from sqlalchemy.orm import Session
 from models import User
 from passlib.context import CryptContext
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError  # For JWT token creation and validation
 
@@ -41,9 +41,9 @@ class CreateUserRequest(BaseModel):
     email: str
     first_name: str
     last_name: str | None = None
-    password: str = Path(min_length=4, max_length=128)
+    password: str = Field(min_length=4, max_length=128)
     role: str = "user"  # Default user role
-    phone_number: str | None = None
+    phone_number: Optional[str] = Field(min_length=8, max_length=15)
 
 
 def get_current_user_from_db(db: Session, token:str):
