@@ -43,6 +43,7 @@ class CreateUserRequest(BaseModel):
     last_name: str | None = None
     password: str = Path(min_length=4, max_length=128)
     role: str = "user"  # Default user role
+    phone_number: str | None = None
 
 
 def get_current_user_from_db(db: Session, token:str):
@@ -101,6 +102,7 @@ async def create_user(db: db_dependency, user: CreateUserRequest):
         last_name=user.last_name,
         hashed_password= hash_password(user.password),  # Hash the password before storing
         role=user.role,
+        phone_number=user.phone_number,
         is_active=True
     )
     db.add(create_user_model)
