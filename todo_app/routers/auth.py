@@ -1,9 +1,9 @@
 from datetime import timedelta, datetime, timezone  # Import datetime for token expiration
 from fastapi import APIRouter, HTTPException, Path, status, Depends
 from pydantic import BaseModel, Field
-from database import session_local
+from ..database import session_local
 from sqlalchemy.orm import Session
-from models import User
+from ..models import User
 from passlib.context import CryptContext
 from typing import Annotated, Optional
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer

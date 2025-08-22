@@ -1,10 +1,10 @@
 from fastapi import Body, HTTPException, Path, APIRouter
 from sqlalchemy.orm import Session
-from user_request import UserChangePasswordRequest, UserChangePhoneNumberRequest
-from user_response import UserResponse
+from ..user_request import UserChangePasswordRequest, UserChangePhoneNumberRequest
+from ..user_response import UserResponse
 from .auth import hash_password
-from dependencies import db_dependency, user_dependency, db_and_user_dependency, admin_dependency
-from models import User as UserModel
+from ..dependencies import db_dependency, user_dependency, db_and_user_dependency, admin_dependency
+from ..models import User as UserModel
 
 router = APIRouter()
 

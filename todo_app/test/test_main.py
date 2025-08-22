@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 from fastapi import status
-import main
+from todo_app.main import app
 
-client = TestClient(main.app)
+client = TestClient(app)
 
 
 def test_healthcheck():

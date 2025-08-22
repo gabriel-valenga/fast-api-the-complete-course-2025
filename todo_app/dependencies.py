@@ -1,8 +1,8 @@
 from typing import Annotated, Tuple
 from fastapi import Depends, HTTPException, status
-from database import get_db
+from .database import get_db
 from sqlalchemy.orm import Session
-from routers.auth import get_current_user, get_db_and_current_user
+from .routers.auth import get_current_user, get_db_and_current_user
 
 
 def get_db_and_user(

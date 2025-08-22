@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from database import engine
-from routers import auth, todos, users
-import models
+from .database import engine
+from .routers import auth, todos, users
+from .models import base
 
 app = FastAPI() 
 
-models.base.metadata.create_all(bind=engine)
+base.metadata.create_all(bind=engine)
 
 
 @app.get("/healthcheck")

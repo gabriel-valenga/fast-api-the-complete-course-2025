@@ -1,11 +1,11 @@
 from typing import Annotated, Tuple
 from fastapi import Depends, HTTPException, Path, status, APIRouter
-from database import get_db
+from ..database import get_db
 from sqlalchemy.orm import Session, joinedload
-from todo_response import TodoResponse
-from todo_request import TodoRequest
+from ..todo_response import TodoResponse
+from ..todo_request import TodoRequest
 from .auth import get_current_user
-from models import Todos as TodosModel
+from ..models import Todos as TodosModel
 
 router = APIRouter()
 
