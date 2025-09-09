@@ -56,7 +56,6 @@ client = TestClient(app)
 def test_todo():
     db = TestingSessionLocal()
     new_todo = Todos(
-        id=1,
         title="Test Todo",
         description="This is a test todo", 
         owner_id=1, 
@@ -105,4 +104,26 @@ def test_read_one_todo_authenticated_not_found():
     response = client.get('/todo/999')
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Not Found"}
+
+
+def test_create_todo_authenticated(test_todo):
+    request_data = {
+        "title": "New Todo", 
+        "description": "This is a new todo",
+        "priority": 3,
+        "completed": False
+    }    
+    response = client.post(
+        '/todos/todo/',
+        json=request_data
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    print(response.json())
+    
+    db = TestingSessionLocal()
+    model = db.query(Todos).filter(Todos.id == 2).first()
+    assert model.title == request_data.get('title')
+    assert model.description == request_data.get('description')
+    assert model.priority == request_data.get('priority')
+    assert model.completed == request_data.get('completed')
     
