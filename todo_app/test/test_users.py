@@ -50,3 +50,53 @@ def test_return_user(user_fixture_test):
     response = client.get('/users/')
     assert response.status_code == status.HTTP_200_OK
     assert response.json()['username'] == "testuser"
+    assert response.json()['email'] == "testuser@test.com"
+    assert response.json()['first_name'] == "Test"
+    assert response.json()['last_name'] == "User"
+    assert response.json()['role'] == "admin"
+    assert response.json()['phone_number'] == "1234567890"
+    assert response.json()['is_active'] is True
+
+
+def test_change_password_successful(user_fixture_test):
+    response = client.put(
+        '/users/change-password',
+        json={
+            "old_password": "testpassword",
+            "new_password": "newtestpassword"
+        }
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"message": "Password updated successfully"}
+    db = TestingSessionLocal()
+    user = db.query(User).filter(User.username == "testuser").first()
+    assert bcrypt_context.verify("newtestpassword", user.hashed_password)
+    db.close()
+
+
+def test_change_password_invalid_old_password(user_fixture_test):
+    response = client.put(
+        '/users/change-password',
+        json={
+            "old_password": "wrong_password",
+            "new_password": "newtestpassword"
+        }
+    )
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json() == {"detail": "Error on password change"}
+
+
+def test_change_phone_number_successful(user_fixture_test):
+    response = client.put(
+        '/users/change-phone-number',
+        json={
+            "new_phone_number": "0987654321"
+        }
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"message": "Phone number updated successfully"}
+    db = TestingSessionLocal()
+    user = db.query(User).filter(User.username == "testuser").first()
+    assert user.phone_number == "0987654321"
+    db.close()
+    
