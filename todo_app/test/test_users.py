@@ -25,7 +25,7 @@ app.dependency_overrides[get_db_and_user] = override_get_db_and_user
 
 
 @pytest.fixture
-def test_user():
+def user_fixture_test():
     print("Setting up test user")
     user = User(
         username="testuser", 
@@ -46,7 +46,7 @@ def test_user():
         connection.commit()
 
 
-def test_return_user(test_user):
-    response = client.get('/current_user_information/')
+def test_return_user(user_fixture_test):
+    response = client.get('/users/')
     assert response.status_code == status.HTTP_200_OK
     assert response.json()['username'] == "testuser"
