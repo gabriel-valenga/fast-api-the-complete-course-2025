@@ -69,7 +69,7 @@ def test_read_one_todo_authenticated(test_todo):
     
 
 def test_read_one_todo_authenticated_not_found():
-    response = client.get('/todo/999')
+    response = client.get('todos/todo/999')
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Not Found"}
 
